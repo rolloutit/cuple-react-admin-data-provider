@@ -142,7 +142,7 @@ export function createCupleReactAdminDataProvider<
     const req = await clientModule.update.put({
       query: { resource: resource as TResource },
       body: {
-        data: [params.data],
+        data: params.data,
       },
     });
     if (req.result !== "success") {

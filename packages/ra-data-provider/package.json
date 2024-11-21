@@ -1,6 +1,6 @@
 {
   "name": "cuple-react-admin-data-provider",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "React admin data provider for cuple-based backends",
   "main": "dist/index.js",
   "scripts": {
