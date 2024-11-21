@@ -25,45 +25,47 @@ import type * as CupleReactAdminApi from "../../ra-api";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type RecordType = any;
 
-export function createCupleReactAdminDataProvider(clientModule: {
+export function createCupleReactAdminDataProvider<
+  TResource extends string,
+>(clientModule: {
   getList: {
     get: (
-      params: CupleReactAdminApi.GetListClientParams,
+      params: CupleReactAdminApi.GetListClientParams<TResource>,
     ) => Promise<CupleReactAdminApi.GetListResult>;
   };
   getOne: {
     get: (
-      params: CupleReactAdminApi.GetOneClientParams,
+      params: CupleReactAdminApi.GetOneClientParams<TResource>,
     ) => Promise<CupleReactAdminApi.GetOneResult>;
   };
   getMany: {
     get: (
-      params: CupleReactAdminApi.GetManyClientParams,
+      params: CupleReactAdminApi.GetManyClientParams<TResource>,
     ) => Promise<CupleReactAdminApi.GetManyResult>;
   };
   update: {
     put: (
-      params: CupleReactAdminApi.UpdateClientParams,
+      params: CupleReactAdminApi.UpdateClientParams<TResource>,
     ) => Promise<CupleReactAdminApi.UpdateResult>;
   };
   updateMany: {
     put: (
-      params: CupleReactAdminApi.UpdateManyClientParams,
+      params: CupleReactAdminApi.UpdateManyClientParams<TResource>,
     ) => Promise<CupleReactAdminApi.UpdateManyResult>;
   };
   create: {
     post: (
-      params: CupleReactAdminApi.CreateClientParams,
+      params: CupleReactAdminApi.CreateClientParams<TResource>,
     ) => Promise<CupleReactAdminApi.CreateResult>;
   };
   delete: {
     delete: (
-      params: CupleReactAdminApi.DeleteClientParams,
+      params: CupleReactAdminApi.DeleteClientParams<TResource>,
     ) => Promise<CupleReactAdminApi.DeleteResult>;
   };
   deleteMany: {
     delete: (
-      params: CupleReactAdminApi.DeleteManyClientParams,
+      params: CupleReactAdminApi.DeleteManyClientParams<TResource>,
     ) => Promise<CupleReactAdminApi.DeleteManyResult>;
   };
 }) {
@@ -79,7 +81,7 @@ export function createCupleReactAdminDataProvider(clientModule: {
 
     const req = await clientModule.getList.get({
       query: {
-        resource,
+        resource: resource as TResource,
         filter: params.filter,
         range: [rangeStart, rangeEnd],
         sort: sort ? { [sort.field]: sort.order.toLowerCase() as "asc" | "desc" } : {},
@@ -100,7 +102,7 @@ export function createCupleReactAdminDataProvider(clientModule: {
   ): Promise<GetOneResult<RecordType>> {
     const req = await clientModule.getOne.get({
       query: {
-        resource,
+        resource: resource as TResource,
         id: params.id,
       },
     });
@@ -116,7 +118,7 @@ export function createCupleReactAdminDataProvider(clientModule: {
   ): Promise<GetManyResult<RecordType>> {
     const req = await clientModule.getMany.get({
       query: {
-        resource,
+        resource: resource as TResource,
         ids: params.ids,
       },
     });
@@ -138,7 +140,7 @@ export function createCupleReactAdminDataProvider(clientModule: {
     params: UpdateParams,
   ): Promise<UpdateResult<RecordType>> {
     const req = await clientModule.update.put({
-      query: { resource },
+      query: { resource: resource as TResource },
       body: {
         data: [params.data],
       },
@@ -154,7 +156,7 @@ export function createCupleReactAdminDataProvider(clientModule: {
     params: UpdateManyParams<RecordType>,
   ): Promise<UpdateManyResult<RecordType>> {
     const req = await clientModule.updateMany.put({
-      query: { resource },
+      query: { resource: resource as TResource },
       body: {
         ids: params.ids as number[],
         changes: params.data,
@@ -171,7 +173,7 @@ export function createCupleReactAdminDataProvider(clientModule: {
     params: CreateParams<Omit<RecordType, "id">>,
   ): Promise<CreateResult<RecordType>> {
     const req = await clientModule.create.post({
-      query: { resource },
+      query: { resource: resource as TResource },
       body: {
         data: params.data,
       },
@@ -188,7 +190,7 @@ export function createCupleReactAdminDataProvider(clientModule: {
   ): Promise<DeleteResult<RecordType>> {
     const req = await clientModule.delete.delete({
       query: {
-        resource,
+        resource: resource as TResource,
         id: params.id,
       },
     });
@@ -204,7 +206,7 @@ export function createCupleReactAdminDataProvider(clientModule: {
   ): Promise<DeleteManyResult<RecordType>> {
     const req = await clientModule.deleteMany.delete({
       query: {
-        resource,
+        resource: resource as TResource,
         ids: params.ids,
       },
     });

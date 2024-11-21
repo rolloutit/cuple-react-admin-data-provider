@@ -3,155 +3,160 @@ import { BuiltEndpoint } from "@cuple/server/dist/builder";
 import { Success } from "@cuple/server/dist/responses";
 import { z } from "zod";
 
+const getListSchema = z.object({
+  sort: z.record(z.string(), z.enum(["asc", "desc"])).optional(),
+  range: z.tuple([z.coerce.number(), z.coerce.number()]),
+  filter: z.record(z.string(), z.string()).optional(),
+  ids: z.array(z.coerce.number()).optional(),
+});
+const getOneSchema = z.object({
+  id: z.coerce.number(),
+});
+const getManySchema = z.object({
+  ids: z.array(z.coerce.number()),
+});
+const createSchema = z.object({
+  data: z.record(z.string(), z.any()),
+});
+const updateSchema = z.object({
+  data: z.record(z.string(), z.any()),
+});
+const updateManySchema = z.object({
+  ids: z.array(z.number()),
+  changes: z.record(z.string(), z.any()),
+});
+const deleteSchema = z.object({
+  id: z.coerce.number(),
+});
+const deleteManySchema = z.object({
+  ids: z.array(z.coerce.number()),
+});
+
+const METHODS = {
+  getList: "get",
+  getOne: "get",
+  getMany: "get",
+  create: "post",
+  update: "put",
+  updateMany: "put",
+  delete: "delete",
+  deleteMany: "delete",
+} as const;
+
 /**
  * @params builder Please make sure the builder has an authentication attached to it
  */
-function createReactAdminEndpointBuilders<TBuilder, TReactAdminResource extends string>(
-  builder: TBuilder,
-  resources: TReactAdminResource[],
-) {
+function createReactAdminEndpointBuilders(builder: unknown, resources: string[]) {
   if (!(builder instanceof Builder))
     throw new Error("builder is not instance of Builder");
 
   const crudBuilder = builder.querySchema(
     z.object({
-      resource: z.enum(resources as [TReactAdminResource, ...TReactAdminResource[]]),
+      resource: z.enum(resources as [string, ...string[]]),
     }),
   );
-
-  const getListHandler = crudBuilder.querySchema(
-    z.object({
-      sort: z.record(z.string(), z.enum(["asc", "desc"])).optional(),
-      range: z.tuple([z.coerce.number(), z.coerce.number()]),
-      filter: z.record(z.string(), z.string()),
-      ids: z.array(z.coerce.number()).optional(),
-    }),
-  ).get;
-
-  const getOneHandler = crudBuilder.querySchema(
-    z.object({
-      id: z.coerce.number(),
-    }),
-  ).get;
-
-  const getManyHandler = crudBuilder.querySchema(
-    z.object({
-      ids: z.array(z.coerce.number()),
-    }),
-  ).get;
-
-  const createHandler = crudBuilder.bodySchema(
-    z.object({
-      data: z.record(z.string(), z.any()),
-    }),
-  ).post;
-
-  const updateHandler = crudBuilder.bodySchema(
-    z.object({
-      item: z.record(z.string(), z.any()),
-    }),
-  ).put;
-
-  const updateManyHandler = crudBuilder.bodySchema(
-    z.object({
-      ids: z.array(z.number()),
-      changes: z.record(z.string(), z.any()),
-    }),
-  ).put;
-
-  const deleteHandler = crudBuilder.querySchema(
-    z.object({
-      id: z.coerce.number(),
-    }),
-  ).delete;
-
-  const deleteManyHandler = crudBuilder.querySchema(
-    z.object({
-      ids: z.array(z.coerce.number()),
-    }),
-  ).delete;
 
   return {
     _resources: resources,
     crudBuilder,
-    getListHandler,
-    getOneHandler,
-    getManyHandler,
-    createHandler,
-    updateHandler,
-    updateManyHandler,
-    deleteHandler,
-    deleteManyHandler,
+    getList: crudBuilder.querySchema(getListSchema)[METHODS["getList"]],
+    getOne: crudBuilder.querySchema(getOneSchema)[METHODS["getOne"]],
+    getMany: crudBuilder.querySchema(getManySchema)[METHODS["getMany"]],
+    create: crudBuilder.bodySchema(createSchema)[METHODS["create"]],
+    update: crudBuilder.bodySchema(updateSchema)[METHODS["update"]],
+    updateMany: crudBuilder.bodySchema(updateManySchema)[METHODS["updateMany"]],
+    delete: crudBuilder.querySchema(deleteSchema)[METHODS["delete"]],
+    deleteMany: crudBuilder.querySchema(deleteManySchema)[METHODS["deleteMany"]],
   };
 }
 
-export type GetListParams<TParams, TReactAdminResource extends string> = {
+export type GetListParams<TParams, TReactAdminResource extends string> = TParams & {
   query: {
     resource: TReactAdminResource;
-    sort: Record<string, "asc" | "desc">;
-    range: [number, number];
-    filter: Record<string, string>;
-    ids?: number[];
-  };
-} & TParams;
-export type GetOneParams<TParams, TReactAdminResource extends string> = {
+  } & z.infer<typeof getListSchema>;
+};
+export type GetOneParams<TParams, TReactAdminResource extends string> = TParams & {
   query: {
     resource: TReactAdminResource;
-    id: number;
-  };
-} & TParams;
-export type GetManyParams<TParams, TReactAdminResource extends string> = {
+  } & z.infer<typeof getOneSchema>;
+};
+export type GetManyParams<TParams, TReactAdminResource extends string> = TParams & {
   query: {
     resource: TReactAdminResource;
-    ids: number[];
-  };
-} & TParams;
-export type CreateParams<TParams, TReactAdminResource extends string> = {
+  } & z.infer<typeof getManySchema>;
+};
+export type CreateParams<TParams, TReactAdminResource extends string> = TParams & {
   query: {
     resource: TReactAdminResource;
   };
-  body: {
-    data: Record<string, any>;
-  };
-} & TParams;
-export type UpdateParams<TParams, TReactAdminResource extends string> = {
+  body: z.infer<typeof createSchema>;
+};
+export type UpdateParams<TParams, TReactAdminResource extends string> = TParams & {
   query: {
     resource: TReactAdminResource;
   };
-  body: {
-    data: Record<string, any>;
-  };
-} & TParams;
-export type UpdateManyParams<TParams, TReactAdminResource extends string> = {
+  body: z.infer<typeof updateSchema>;
+};
+export type UpdateManyParams<TParams, TReactAdminResource extends string> = TParams & {
   query: {
     resource: TReactAdminResource;
   };
-  body: {
-    ids: number[];
-    changes: Record<string, any>;
-  };
-} & TParams;
-export type DeleteParams<TParams, TReactAdminResource extends string> = {
+  body: z.infer<typeof updateManySchema>;
+};
+export type DeleteParams<TParams, TReactAdminResource extends string> = TParams & {
   query: {
     resource: TReactAdminResource;
-    id: number;
-  };
-} & TParams;
-export type DeleteManyParams<TParams, TReactAdminResource extends string> = {
+  } & z.infer<typeof deleteSchema>;
+};
+export type DeleteManyParams<TParams, TReactAdminResource extends string> = TParams & {
   query: {
     resource: TReactAdminResource;
-    ids: number[];
-  };
-} & TParams;
+  } & z.infer<typeof deleteManySchema>;
+};
 
-export type GetListClientParams = GetListParams<object, string>;
-export type GetOneClientParams = GetOneParams<object, string>;
-export type GetManyClientParams = GetManyParams<object, string>;
-export type CreateClientParams = CreateParams<object, string>;
-export type UpdateClientParams = UpdateParams<object, string>;
-export type UpdateManyClientParams = UpdateManyParams<object, string>;
-export type DeleteClientParams = DeleteParams<object, string>;
-export type DeleteManyClientParams = DeleteManyParams<object, string>;
+type Params<TParams, TReactAdminResource extends string> = {
+  getList: GetListParams<TParams, TReactAdminResource>;
+  getOne: GetOneParams<TParams, TReactAdminResource>;
+  getMany: GetManyParams<TParams, TReactAdminResource>;
+  create: CreateParams<TParams, TReactAdminResource>;
+  update: UpdateParams<TParams, TReactAdminResource>;
+  updateMany: UpdateManyParams<TParams, TReactAdminResource>;
+  delete: DeleteParams<TParams, TReactAdminResource>;
+  deleteMany: DeleteManyParams<TParams, TReactAdminResource>;
+};
+
+export type GetListClientParams<TResource extends string> = GetListParams<
+  object,
+  TResource
+>;
+export type GetOneClientParams<TResource extends string> = GetOneParams<
+  object,
+  TResource
+>;
+export type GetManyClientParams<TResource extends string> = GetManyParams<
+  object,
+  TResource
+>;
+export type CreateClientParams<TResource extends string> = CreateParams<
+  object,
+  TResource
+>;
+export type UpdateClientParams<TResource extends string> = UpdateParams<
+  object,
+  TResource
+>;
+export type UpdateManyClientParams<TResource extends string> = UpdateManyParams<
+  object,
+  TResource
+>;
+export type DeleteClientParams<TResource extends string> = DeleteParams<
+  object,
+  TResource
+>;
+export type DeleteManyClientParams<TResource extends string> = DeleteManyParams<
+  object,
+  TResource
+>;
 
 export type Item = { id: number | string };
 export type GetListResult =
@@ -174,112 +179,82 @@ export type DeleteResult =
   | Success<{ item: Item | null }>
   | { result: "error"; message: string };
 export type DeleteManyResult = Success<object> | { result: "error"; message: string };
+
+type Result = {
+  getList: GetListResult;
+  getOne: GetOneResult;
+  getMany: GetManyResult;
+  create: CreateResult;
+  update: UpdateResult;
+  updateMany: UpdateManyResult;
+  delete: DeleteResult;
+  deleteMany: DeleteManyResult;
+};
+
+type Handlers<TData extends object, TResource extends string> = {
+  getList: (data: GetListParams<TData, TResource>) => Promise<GetListResult>;
+  getOne: (data: GetOneParams<TData, TResource>) => Promise<GetOneResult>;
+  getMany: (data: GetManyParams<TData, TResource>) => Promise<GetManyResult>;
+  create: (data: CreateParams<TData, TResource>) => Promise<CreateResult>;
+  update: (data: UpdateParams<TData, TResource>) => Promise<UpdateResult>;
+  updateMany: (data: UpdateManyParams<TData, TResource>) => Promise<UpdateManyResult>;
+  delete: (data: DeleteParams<TData, TResource>) => Promise<DeleteResult>;
+  deleteMany: (data: DeleteManyParams<TData, TResource>) => Promise<DeleteManyResult>;
+};
+
 export function createCupleReactAdminAPI<
   TData extends object,
-  TResources extends string[],
+  TResource extends string,
 >(options: {
   builder: Builder<TData, any, any>;
-  resources: TResources;
-  defaultHandlers: {
-    getList: (data: GetListParams<TData, TResources[number]>) => Promise<GetListResult>;
-    getOne: (data: GetOneParams<TData, TResources[number]>) => Promise<GetOneResult>;
-    getMany: (data: GetManyParams<TData, TResources[number]>) => Promise<GetManyResult>;
-    create: (data: CreateParams<TData, TResources[number]>) => Promise<CreateResult>;
-    update: (data: UpdateParams<TData, TResources[number]>) => Promise<UpdateResult>;
-    updateMany: (
-      data: UpdateManyParams<TData, TResources[number]>,
-    ) => Promise<UpdateManyResult>;
-    delete: (data: DeleteParams<TData, TResources[number]>) => Promise<DeleteResult>;
-    deleteMany: (
-      data: DeleteManyParams<TData, TResources[number]>,
-    ) => Promise<DeleteManyResult>;
-  };
+  resources: TResource[];
+  defaultHandlers: Handlers<TData, TResource>;
   overrides: {
-    [Key in TResources[number]]?: {
-      getList?: (
-        data: GetListParams<TData, TResources[number]>,
-      ) => Promise<GetListResult>;
-      getOne?: (data: GetOneParams<TData, TResources[number]>) => Promise<GetOneResult>;
-      getMany?: (
-        data: GetManyParams<TData, TResources[number]>,
-      ) => Promise<GetManyResult>;
-      create?: (data: CreateParams<TData, TResources[number]>) => Promise<CreateResult>;
-      update?: (data: UpdateParams<TData, TResources[number]>) => Promise<UpdateResult>;
-      updateMany?: (
-        data: UpdateManyParams<TData, TResources[number]>,
-      ) => Promise<UpdateManyResult>;
-      delete?: (data: DeleteParams<TData, TResources[number]>) => Promise<DeleteResult>;
-      deleteMany?: (
-        data: DeleteManyParams<TData, TResources[number]>,
-      ) => Promise<DeleteManyResult>;
-    };
+    [Key in TResource]?: Partial<Handlers<TData, Key>>;
   };
 }) {
   const reactAdmin = createReactAdminEndpointBuilders(options.builder, options.resources);
-  const overrides = options.overrides;
   return {
-    getList: reactAdmin.getListHandler(async ({ data }) => {
-      const res = data.query.resource as keyof typeof overrides;
-      const resOverrides = overrides?.[res];
-      const handler = resOverrides?.getList || options.defaultHandlers.getList;
-      return await handler(data as any);
-    }) as BuiltEndpoint<GetListParams<TData, TResources[number]>, GetListResult, "get">,
-
-    getOne: reactAdmin.getOneHandler(async ({ data }) => {
-      const res = data.query.resource as keyof typeof overrides;
-      const resOverrides = overrides?.[res];
-      const handler = resOverrides?.getOne || options.defaultHandlers.getOne;
-      return await handler(data as any);
-    }) as BuiltEndpoint<GetOneParams<TData, TResources[number]>, GetOneResult, "get">,
-
-    getMany: reactAdmin.getManyHandler(async ({ data }) => {
-      const res = data.query.resource as keyof typeof overrides;
-      const resOverrides = overrides?.[res];
-      const handler = resOverrides?.getMany || options.defaultHandlers.getMany;
-      return await handler(data as any);
-    }) as BuiltEndpoint<GetManyParams<TData, TResources[number]>, GetManyResult, "get">,
-
-    create: reactAdmin.createHandler(async ({ data }) => {
-      const res = data.query.resource as keyof typeof overrides;
-      const resOverrides = overrides?.[res];
-      const handler = resOverrides?.create || options.defaultHandlers.create;
-      return await handler(data as any);
-    }) as BuiltEndpoint<CreateParams<TData, TResources[number]>, CreateResult, "post">,
-
-    update: reactAdmin.updateHandler(async ({ data }) => {
-      const res = data.query.resource as keyof typeof overrides;
-      const resOverrides = overrides?.[res];
-      const handler = resOverrides?.update || options.defaultHandlers.update;
-      return await handler(data as any);
-    }) as BuiltEndpoint<UpdateParams<TData, TResources[number]>, UpdateResult, "put">,
-
-    updateMany: reactAdmin.updateManyHandler(async ({ data }) => {
-      const res = data.query.resource as keyof typeof overrides;
-      const resOverrides = overrides?.[res];
-      const handler = resOverrides?.updateMany || options.defaultHandlers.updateMany;
-      return await handler(data as any);
-    }) as BuiltEndpoint<
-      UpdateManyParams<TData, TResources[number]>,
-      UpdateManyResult,
-      "put"
-    >,
-
-    delete: reactAdmin.deleteHandler(async ({ data }) => {
-      const res = data.query.resource as keyof typeof overrides;
-      const resOverrides = overrides?.[res];
-      const handler = resOverrides?.delete || options.defaultHandlers.delete;
-      return await handler(data as any);
-    }) as BuiltEndpoint<DeleteParams<TData, TResources[number]>, DeleteResult, "delete">,
-
-    deleteMany: reactAdmin.deleteManyHandler(async ({ data }) => {
-      const res = data.query.resource as keyof typeof overrides;
-      const resOverrides = overrides?.[res];
-      const handler = resOverrides?.deleteMany || options.defaultHandlers.deleteMany;
-      return await handler(data as any);
-    }) as BuiltEndpoint<
-      DeleteManyParams<TData, TResources[number]>,
-      DeleteManyResult,
-      "delete"
-    >,
+    getList: createEndpoint<TData, TResource, "getList">(reactAdmin, options, "getList"),
+    getOne: createEndpoint<TData, TResource, "getOne">(reactAdmin, options, "getOne"),
+    getMany: createEndpoint<TData, TResource, "getMany">(reactAdmin, options, "getMany"),
+    create: createEndpoint<TData, TResource, "create">(reactAdmin, options, "create"),
+    update: createEndpoint<TData, TResource, "update">(reactAdmin, options, "update"),
+    updateMany: createEndpoint<TData, TResource, "updateMany">(
+      reactAdmin,
+      options,
+      "updateMany",
+    ),
+    delete: createEndpoint<TData, TResource, "delete">(reactAdmin, options, "delete"),
+    deleteMany: createEndpoint<TData, TResource, "deleteMany">(
+      reactAdmin,
+      options,
+      "deleteMany",
+    ),
   };
+}
+function createEndpoint<
+  TData extends object,
+  TResource extends string,
+  THandlerName extends keyof Result,
+>(
+  reactAdmin: ReturnType<typeof createReactAdminEndpointBuilders>,
+  options: {
+    defaultHandlers: Handlers<TData, TResource>;
+    overrides: {
+      [Key in TResource]?: Partial<Handlers<TData, Key>>;
+    };
+  },
+  handlerName: THandlerName,
+) {
+  return reactAdmin[handlerName](async ({ data }) => {
+    const res = data.query.resource as keyof typeof options.overrides;
+    const resOverrides = options.overrides?.[res];
+    const handler = resOverrides?.[handlerName] || options.defaultHandlers[handlerName];
+    return await handler(data as any);
+  }) as unknown as BuiltEndpoint<
+    Params<TData, TResource>[typeof handlerName],
+    Result[typeof handlerName],
+    (typeof METHODS)[typeof handlerName]
+  >;
 }
