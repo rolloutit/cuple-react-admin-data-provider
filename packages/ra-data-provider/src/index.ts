@@ -61,6 +61,11 @@ export function createCupleReactAdminDataProvider(clientModule: {
       params: CupleReactAdminApi.DeleteClientParams,
     ) => Promise<CupleReactAdminApi.DeleteResult>;
   };
+  deleteMany: {
+    delete: (
+      params: CupleReactAdminApi.DeleteManyClientParams,
+    ) => Promise<CupleReactAdminApi.DeleteManyResult>;
+  };
 }) {
   async function getList(
     resource: string,
@@ -184,7 +189,7 @@ export function createCupleReactAdminDataProvider(clientModule: {
     const req = await clientModule.delete.delete({
       query: {
         resource,
-        ids: [params.id],
+        id: params.id,
       },
     });
     if (req.result !== "success") {
@@ -197,7 +202,7 @@ export function createCupleReactAdminDataProvider(clientModule: {
     resource: string,
     params: DeleteManyParams<RecordType>,
   ): Promise<DeleteManyResult<RecordType>> {
-    const req = await clientModule.delete.delete({
+    const req = await clientModule.deleteMany.delete({
       query: {
         resource,
         ids: params.ids,

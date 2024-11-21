@@ -61,6 +61,12 @@ function createReactAdminEndpointBuilders<TBuilder, TReactAdminResource extends 
 
   const deleteHandler = crudBuilder.querySchema(
     z.object({
+      id: z.coerce.number(),
+    }),
+  ).delete;
+
+  const deleteManyHandler = crudBuilder.querySchema(
+    z.object({
       ids: z.array(z.coerce.number()),
     }),
   ).delete;
@@ -75,6 +81,7 @@ function createReactAdminEndpointBuilders<TBuilder, TReactAdminResource extends 
     updateHandler,
     updateManyHandler,
     deleteHandler,
+    deleteManyHandler,
   };
 }
 
@@ -127,6 +134,12 @@ export type UpdateManyParams<TParams, TReactAdminResource extends string> = {
 export type DeleteParams<TParams, TReactAdminResource extends string> = {
   query: {
     resource: TReactAdminResource;
+    id: number;
+  };
+} & TParams;
+export type DeleteManyParams<TParams, TReactAdminResource extends string> = {
+  query: {
+    resource: TReactAdminResource;
     ids: number[];
   };
 } & TParams;
@@ -138,6 +151,7 @@ export type CreateClientParams = CreateParams<object, string>;
 export type UpdateClientParams = UpdateParams<object, string>;
 export type UpdateManyClientParams = UpdateManyParams<object, string>;
 export type DeleteClientParams = DeleteParams<object, string>;
+export type DeleteManyClientParams = DeleteManyParams<object, string>;
 
 export type Item = { id: number | string };
 export type GetListResult =
@@ -159,7 +173,7 @@ export type UpdateManyResult = Success<object> | { result: "error"; message: str
 export type DeleteResult =
   | Success<{ item: Item | null }>
   | { result: "error"; message: string };
-
+export type DeleteManyResult = Success<object> | { result: "error"; message: string };
 export function createCupleReactAdminAPI<
   TData extends object,
   TResources extends string[],
@@ -176,6 +190,9 @@ export function createCupleReactAdminAPI<
       data: UpdateManyParams<TData, TResources[number]>,
     ) => Promise<UpdateManyResult>;
     delete: (data: DeleteParams<TData, TResources[number]>) => Promise<DeleteResult>;
+    deleteMany: (
+      data: DeleteManyParams<TData, TResources[number]>,
+    ) => Promise<DeleteManyResult>;
   };
   overrides: {
     [Key in TResources[number]]?: {
@@ -192,6 +209,9 @@ export function createCupleReactAdminAPI<
         data: UpdateManyParams<TData, TResources[number]>,
       ) => Promise<UpdateManyResult>;
       delete?: (data: DeleteParams<TData, TResources[number]>) => Promise<DeleteResult>;
+      deleteMany?: (
+        data: DeleteManyParams<TData, TResources[number]>,
+      ) => Promise<DeleteManyResult>;
     };
   };
 }) {
@@ -250,5 +270,16 @@ export function createCupleReactAdminAPI<
       const handler = resOverrides?.delete || options.defaultHandlers.delete;
       return await handler(data as any);
     }) as BuiltEndpoint<DeleteParams<TData, TResources[number]>, DeleteResult, "delete">,
+
+    deleteMany: reactAdmin.deleteHandler(async ({ data }) => {
+      const res = data.query.resource as keyof typeof overrides;
+      const resOverrides = overrides?.[res];
+      const handler = resOverrides?.delete || options.defaultHandlers.delete;
+      return await handler(data as any);
+    }) as BuiltEndpoint<
+      DeleteManyParams<TData, TResources[number]>,
+      DeleteManyResult,
+      "delete"
+    >,
   };
 }

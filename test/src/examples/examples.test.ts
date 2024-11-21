@@ -21,6 +21,9 @@ describe("Example", () => {
           delete(data) {
             throw new Error("unimplemented");
           },
+          deleteMany(data) {
+            throw new Error("unimplemented");
+          },
           getList(data) {
             throw new Error("unimplemented");
           },
@@ -67,6 +70,9 @@ describe("Example", () => {
             throw new Error("unimplemented");
           },
           delete(data) {
+            throw new Error("unimplemented");
+          },
+          deleteMany(data) {
             throw new Error("unimplemented");
           },
           getList(data) {
@@ -154,6 +160,9 @@ describe("Example", () => {
             delete(data) {
               throw new Error("unimplemented");
             },
+            deleteMany(data) {
+              throw new Error("unimplemented");
+            },
             getList(data) {
               throw new Error("unimplemented");
             },
@@ -185,7 +194,7 @@ describe("Example", () => {
     await cs.run(async (client) => {
       const authedClient = client.with(() => ({
         headers: {
-          autherization: "foo",
+          autherization: "Bearer hey",
         },
       }));
 
