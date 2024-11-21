@@ -1,8 +1,11 @@
 # Cuple - React Admin - Data Provider
 
-Integrating a `react-admin` data provider with your `cuple`-based backend is a bit of a work. This lib simplify this task greatly.
 
-# React-admin frontend
+**Simplify integration between your `react-admin` frontend and `cuple`-based backend.**  
+This library removes the complexity of wiring up a `react-admin` data provider, enabling you to focus on building features.
+
+
+## React-admin Frontend Setup
 
 `npm install cuple-react-admin-data-provider`
 
@@ -19,7 +22,7 @@ export const client = createClient<Routes>({
 export const dataProvider = createCupleReactAdminDataProvider(client.someModuleName);
 ```
 
-# Backend
+## Backend Integration
 
 `npm install cuple-react-admin-api`
 
@@ -76,3 +79,12 @@ initRpc(app, {
   routes,
 });
 ```
+
+## Key Features
+ - Seamless Integration: Plug your react-admin frontend into your cuple backend with minimal effort.
+ - Customizable: Override resource handlers for tailored behavior.
+ - Type-Safe: Leverages cuple's type system for a robust and reliable integration.
+
+## Contributing
+
+Contributions are welcome! Feel free to open issues or submit pull requests.
