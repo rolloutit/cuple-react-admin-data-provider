@@ -1,30 +1,27 @@
 {
   "name": "cuple-react-admin-data-provider",
-  "version": "1.1.0",
-  "description": "typescript-based RPC with REST compatibility",
+  "version": "1.0.0",
+  "description": "React admin data provider for cuple-based backends",
   "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fxdave/cuple.git"
+    "url": "git+https://github.com/rolloutit/cuple-react-admin-data-provider.git"
   },
   "keywords": [
-    "rpc",
-    "type",
-    "sharing",
-    "rest",
-    "procedure",
-    "frontend",
+    "react-admin",
+    "cuple",
+    "data-provider",
     "api"
   ],
   "author": "David Biro",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/fxdave/cuple/issues"
+    "url": "https://github.com/rolloutit/cuple-react-admin-data-provider/issues"
   },
-  "homepage": "https://github.com/fxdave/cuple#readme",
+  "homepage": "https://github.com/rolloutit/cuple-react-admin-data-provider",
   "dependencies": {
     "react-admin": "^5.3.4"
   }
