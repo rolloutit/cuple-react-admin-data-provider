@@ -271,7 +271,7 @@ export function createCupleReactAdminAPI<
       return await handler(data as any);
     }) as BuiltEndpoint<DeleteParams<TData, TResources[number]>, DeleteResult, "delete">,
 
-    deleteMany: reactAdmin.deleteHandler(async ({ data }) => {
+    deleteMany: reactAdmin.deleteManyHandler(async ({ data }) => {
       const res = data.query.resource as keyof typeof overrides;
       const resOverrides = overrides?.[res];
       const handler = resOverrides?.delete || options.defaultHandlers.delete;
