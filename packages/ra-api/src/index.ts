@@ -1,14 +1,18 @@
 import { Builder } from "@cuple/server";
+import { BuiltEndpoint } from "@cuple/server/dist/builder";
 import { Success } from "@cuple/server/dist/responses";
 import { z } from "zod";
 
 /**
  * @params builder Please make sure the builder has an authentication attached to it
  */
-function createReactAdminEndpointBuilders<
-  TBuilder extends Builder<object, never, any>,
-  TReactAdminResource extends string,
->(builder: TBuilder, resources: TReactAdminResource[]) {
+function createReactAdminEndpointBuilders<TBuilder, TReactAdminResource extends string>(
+  builder: TBuilder,
+  resources: TReactAdminResource[],
+) {
+  if (!(builder instanceof Builder))
+    throw new Error("builder is not instance of Builder");
+
   const crudBuilder = builder.querySchema(
     z.object({
       resource: z.enum(resources as [TReactAdminResource, ...TReactAdminResource[]]),
@@ -156,60 +160,38 @@ export type DeleteResult =
   | Success<{ item: Item | null }>
   | { result: "error"; message: string };
 
-export type BuilderParams<TBuilder> =
-  TBuilder extends Builder<infer Params, any, any> ? Params : never;
 export function createCupleReactAdminAPI<
-  TBuilder extends Builder<object, never, any>,
+  TData extends object,
   TResources extends string[],
 >(options: {
-  builder: TBuilder;
+  builder: Builder<TData, any, any>;
   resources: TResources;
   defaultHandlers: {
-    getList: (
-      data: GetListParams<BuilderParams<TBuilder>, TResources[number]>,
-    ) => Promise<GetListResult>;
-    getOne: (
-      data: GetOneParams<BuilderParams<TBuilder>, TResources[number]>,
-    ) => Promise<GetOneResult>;
-    getMany: (
-      data: GetManyParams<BuilderParams<TBuilder>, TResources[number]>,
-    ) => Promise<GetManyResult>;
-    create: (
-      data: CreateParams<BuilderParams<TBuilder>, TResources[number]>,
-    ) => Promise<CreateResult>;
-    update: (
-      data: UpdateParams<BuilderParams<TBuilder>, TResources[number]>,
-    ) => Promise<UpdateResult>;
+    getList: (data: GetListParams<TData, TResources[number]>) => Promise<GetListResult>;
+    getOne: (data: GetOneParams<TData, TResources[number]>) => Promise<GetOneResult>;
+    getMany: (data: GetManyParams<TData, TResources[number]>) => Promise<GetManyResult>;
+    create: (data: CreateParams<TData, TResources[number]>) => Promise<CreateResult>;
+    update: (data: UpdateParams<TData, TResources[number]>) => Promise<UpdateResult>;
     updateMany: (
-      data: UpdateManyParams<BuilderParams<TBuilder>, TResources[number]>,
+      data: UpdateManyParams<TData, TResources[number]>,
     ) => Promise<UpdateManyResult>;
-    delete: (
-      data: DeleteParams<BuilderParams<TBuilder>, TResources[number]>,
-    ) => Promise<DeleteResult>;
+    delete: (data: DeleteParams<TData, TResources[number]>) => Promise<DeleteResult>;
   };
   overrides: {
     [Key in TResources[number]]?: {
       getList?: (
-        data: GetListParams<BuilderParams<TBuilder>, TResources[number]>,
+        data: GetListParams<TData, TResources[number]>,
       ) => Promise<GetListResult>;
-      getOne?: (
-        data: GetOneParams<BuilderParams<TBuilder>, TResources[number]>,
-      ) => Promise<GetOneResult>;
+      getOne?: (data: GetOneParams<TData, TResources[number]>) => Promise<GetOneResult>;
       getMany?: (
-        data: GetManyParams<BuilderParams<TBuilder>, TResources[number]>,
+        data: GetManyParams<TData, TResources[number]>,
       ) => Promise<GetManyResult>;
-      create?: (
-        data: CreateParams<BuilderParams<TBuilder>, TResources[number]>,
-      ) => Promise<CreateResult>;
-      update?: (
-        data: UpdateParams<BuilderParams<TBuilder>, TResources[number]>,
-      ) => Promise<UpdateResult>;
+      create?: (data: CreateParams<TData, TResources[number]>) => Promise<CreateResult>;
+      update?: (data: UpdateParams<TData, TResources[number]>) => Promise<UpdateResult>;
       updateMany?: (
-        data: UpdateManyParams<BuilderParams<TBuilder>, TResources[number]>,
+        data: UpdateManyParams<TData, TResources[number]>,
       ) => Promise<UpdateManyResult>;
-      delete?: (
-        data: DeleteParams<BuilderParams<TBuilder>, TResources[number]>,
-      ) => Promise<DeleteResult>;
+      delete?: (data: DeleteParams<TData, TResources[number]>) => Promise<DeleteResult>;
     };
   };
 }) {
@@ -221,42 +203,52 @@ export function createCupleReactAdminAPI<
       const resOverrides = overrides?.[res];
       const handler = resOverrides?.getList || options.defaultHandlers.getList;
       return await handler(data as any);
-    }),
+    }) as BuiltEndpoint<GetListParams<TData, TResources[number]>, GetListResult, "get">,
+
     getOne: reactAdmin.getOneHandler(async ({ data }) => {
       const res = data.query.resource as keyof typeof overrides;
       const resOverrides = overrides?.[res];
       const handler = resOverrides?.getOne || options.defaultHandlers.getOne;
       return await handler(data as any);
-    }),
+    }) as BuiltEndpoint<GetOneParams<TData, TResources[number]>, GetOneResult, "get">,
+
     getMany: reactAdmin.getManyHandler(async ({ data }) => {
       const res = data.query.resource as keyof typeof overrides;
       const resOverrides = overrides?.[res];
       const handler = resOverrides?.getMany || options.defaultHandlers.getMany;
       return await handler(data as any);
-    }),
+    }) as BuiltEndpoint<GetManyParams<TData, TResources[number]>, GetManyResult, "get">,
+
     create: reactAdmin.createHandler(async ({ data }) => {
       const res = data.query.resource as keyof typeof overrides;
       const resOverrides = overrides?.[res];
       const handler = resOverrides?.create || options.defaultHandlers.create;
       return await handler(data as any);
-    }),
+    }) as BuiltEndpoint<CreateParams<TData, TResources[number]>, CreateResult, "post">,
+
     update: reactAdmin.updateHandler(async ({ data }) => {
       const res = data.query.resource as keyof typeof overrides;
       const resOverrides = overrides?.[res];
       const handler = resOverrides?.update || options.defaultHandlers.update;
       return await handler(data as any);
-    }),
+    }) as BuiltEndpoint<UpdateParams<TData, TResources[number]>, UpdateResult, "put">,
+
     updateMany: reactAdmin.updateManyHandler(async ({ data }) => {
       const res = data.query.resource as keyof typeof overrides;
       const resOverrides = overrides?.[res];
       const handler = resOverrides?.updateMany || options.defaultHandlers.updateMany;
       return await handler(data as any);
-    }),
+    }) as BuiltEndpoint<
+      UpdateManyParams<TData, TResources[number]>,
+      UpdateManyResult,
+      "put"
+    >,
+
     delete: reactAdmin.deleteHandler(async ({ data }) => {
       const res = data.query.resource as keyof typeof overrides;
       const resOverrides = overrides?.[res];
       const handler = resOverrides?.delete || options.defaultHandlers.delete;
       return await handler(data as any);
-    }),
+    }) as BuiltEndpoint<DeleteParams<TData, TResources[number]>, DeleteResult, "delete">,
   };
 }
