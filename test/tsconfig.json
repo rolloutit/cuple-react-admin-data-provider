@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "module": "commonjs",
+    "target": "ES2017",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "composite": true,
+    "noErrorTruncation": true,
+    "paths": {
+      "@ra-api/*": ["../packages/ra-api/src/*"],
+      "@ra-data-provider/*": ["../packages/ra-data-provider/src/*"]
+    }
+  },
+  "references": [
+    {
+      "path": "../packages/ra-api"
+    },
+    {
+      "path": "../packages/ra-data-provider"
+    }
+  ],
+  "include": ["./src/**/*"]
+}

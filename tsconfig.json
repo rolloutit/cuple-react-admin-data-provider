@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "sourceMap": true,
+    "module": "commonjs",
+    "target": "ES2017",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "skipLibCheck": true,
+    "paths": {
+      "@ra-api/*": ["./packages/ra-api/src/*"],
+      "@ra-data-provider/*": ["./packages/ra-data-provider/src/*"]
+    }
+  },
+  "references": [
+    { "path": "./packages/ra-api" },
+    { "path": "./packages/ra-data-provider" },
+    { "path": "./test" }
+  ],
+  "files": [],
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  }
+}
