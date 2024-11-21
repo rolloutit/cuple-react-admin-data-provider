@@ -156,6 +156,8 @@ export type DeleteResult =
   | Success<{ item: Item | null }>
   | { result: "error"; message: string };
 
+export type BuilderParams<TBuilder> =
+  TBuilder extends Builder<infer Params, any, any> ? Params : never;
 export function createCupleReactAdminAPI<
   TBuilder extends Builder<object, never, any>,
   TResources extends string[],
@@ -164,41 +166,49 @@ export function createCupleReactAdminAPI<
   resources: TResources;
   defaultHandlers: {
     getList: (
-      data: GetListParams<TBuilder, TResources[number]>,
+      data: GetListParams<BuilderParams<TBuilder>, TResources[number]>,
     ) => Promise<GetListResult>;
-    getOne: (data: GetOneParams<TBuilder, TResources[number]>) => Promise<GetOneResult>;
+    getOne: (
+      data: GetOneParams<BuilderParams<TBuilder>, TResources[number]>,
+    ) => Promise<GetOneResult>;
     getMany: (
-      data: GetManyParams<TBuilder, TResources[number]>,
+      data: GetManyParams<BuilderParams<TBuilder>, TResources[number]>,
     ) => Promise<GetManyResult>;
-    create: (data: CreateParams<TBuilder, TResources[number]>) => Promise<CreateResult>;
-    update: (data: UpdateParams<TBuilder, TResources[number]>) => Promise<UpdateResult>;
+    create: (
+      data: CreateParams<BuilderParams<TBuilder>, TResources[number]>,
+    ) => Promise<CreateResult>;
+    update: (
+      data: UpdateParams<BuilderParams<TBuilder>, TResources[number]>,
+    ) => Promise<UpdateResult>;
     updateMany: (
-      data: UpdateManyParams<TBuilder, TResources[number]>,
+      data: UpdateManyParams<BuilderParams<TBuilder>, TResources[number]>,
     ) => Promise<UpdateManyResult>;
-    delete: (data: DeleteParams<TBuilder, TResources[number]>) => Promise<DeleteResult>;
+    delete: (
+      data: DeleteParams<BuilderParams<TBuilder>, TResources[number]>,
+    ) => Promise<DeleteResult>;
   };
   overrides: {
     [Key in TResources[number]]?: {
       getList?: (
-        data: GetListParams<TBuilder, TResources[number]>,
+        data: GetListParams<BuilderParams<TBuilder>, TResources[number]>,
       ) => Promise<GetListResult>;
       getOne?: (
-        data: GetOneParams<TBuilder, TResources[number]>,
+        data: GetOneParams<BuilderParams<TBuilder>, TResources[number]>,
       ) => Promise<GetOneResult>;
       getMany?: (
-        data: GetManyParams<TBuilder, TResources[number]>,
+        data: GetManyParams<BuilderParams<TBuilder>, TResources[number]>,
       ) => Promise<GetManyResult>;
       create?: (
-        data: CreateParams<TBuilder, TResources[number]>,
+        data: CreateParams<BuilderParams<TBuilder>, TResources[number]>,
       ) => Promise<CreateResult>;
       update?: (
-        data: UpdateParams<TBuilder, TResources[number]>,
+        data: UpdateParams<BuilderParams<TBuilder>, TResources[number]>,
       ) => Promise<UpdateResult>;
       updateMany?: (
-        data: UpdateManyParams<TBuilder, TResources[number]>,
+        data: UpdateManyParams<BuilderParams<TBuilder>, TResources[number]>,
       ) => Promise<UpdateManyResult>;
       delete?: (
-        data: DeleteParams<TBuilder, TResources[number]>,
+        data: DeleteParams<BuilderParams<TBuilder>, TResources[number]>,
       ) => Promise<DeleteResult>;
     };
   };
