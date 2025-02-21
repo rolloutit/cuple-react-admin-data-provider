@@ -6,9 +6,7 @@ import { z } from "zod";
 const getListSchema = z.object({
   sort: z.record(z.string(), z.enum(["asc", "desc"])).optional(),
   range: z.tuple([z.coerce.number(), z.coerce.number()]),
-  filter: z
-    .record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()]))
-    .optional(),
+  filter: z.record(z.string(), z.unknown()).optional(),
   ids: z.array(z.coerce.number()).optional(),
 });
 const getOneSchema = z.object({
