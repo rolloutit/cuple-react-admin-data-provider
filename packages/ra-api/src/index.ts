@@ -3,17 +3,18 @@ import { BuiltEndpoint } from "@cuple/server/dist/builder";
 import { Success } from "@cuple/server/dist/responses";
 import { z } from "zod";
 
+const idSchema = z.union([z.coerce.number(), z.string()]);
 const getListSchema = z.object({
   sort: z.record(z.string(), z.enum(["asc", "desc"])).optional(),
   range: z.tuple([z.coerce.number(), z.coerce.number()]),
   filter: z.record(z.string(), z.unknown()).optional(),
-  ids: z.array(z.coerce.number()).optional(),
+  ids: z.array(idSchema).optional(),
 });
 const getOneSchema = z.object({
-  id: z.coerce.number(),
+  id: idSchema,
 });
 const getManySchema = z.object({
-  ids: z.array(z.coerce.number()),
+  ids: z.array(idSchema),
 });
 const createSchema = z.object({
   data: z.record(z.string(), z.any()),
@@ -22,14 +23,14 @@ const updateSchema = z.object({
   data: z.record(z.string(), z.any()),
 });
 const updateManySchema = z.object({
-  ids: z.array(z.number()),
+  ids: z.array(idSchema),
   changes: z.record(z.string(), z.any()),
 });
 const deleteSchema = z.object({
-  id: z.coerce.number(),
+  id: idSchema,
 });
 const deleteManySchema = z.object({
-  ids: z.array(z.coerce.number()),
+  ids: z.array(idSchema),
 });
 
 const METHODS = {
