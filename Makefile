@@ -11,13 +11,13 @@ build:
 	make clean-if-needed
 	cd packages/ra-api && npx tsc
 	cd packages/ra-data-provider && npx tsc
-	npx tsc
+	npx tsc -p test --noEmit
 
 test: build
 	npx mocha
 
 lint:
-	npx eslint ./packages ./test
+	npx biome check .
 
 lint-fix:
-	npx eslint --fix ./packages ./test
+	npx biome check --write .

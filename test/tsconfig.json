@@ -11,6 +11,7 @@
     "outDir": "./dist",
     "composite": true,
     "noErrorTruncation": true,
+    "skipLibCheck": true,
     "paths": {
       "@ra-api/*": ["../packages/ra-api/src/*"],
       "@ra-data-provider/*": ["../packages/ra-data-provider/src/*"]

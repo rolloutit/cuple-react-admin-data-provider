@@ -1,8 +1,12 @@
 {
   "name": "cuple-react-admin-data-provider",
-  "version": "2.0.0",
+  "version": "2.3.0",
   "description": "React admin data provider for cuple-based backends",
   "main": "dist/index.js",
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -23,6 +27,9 @@
   },
   "homepage": "https://github.com/rolloutit/cuple-react-admin-data-provider",
   "dependencies": {
-    "react-admin": "^5.3.4"
+    "react-admin": "^5.15.4"
+  },
+  "peerDependencies": {
+    "@cuple/client": "^2.3.1"
   }
 }

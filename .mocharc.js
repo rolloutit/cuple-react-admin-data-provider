@@ -1,9 +1,8 @@
 "use strict";
 
 module.exports = {
-  require: "ts-node/register",
+  "node-option": ["import=tsx", "preserve-symlinks"],
   spec: ["./test/**/*.test.ts"],
   "watch-files": ["./packages/**/*.ts"],
-  "node-option": ["preserve-symlinks"],
   exit: true,
 };

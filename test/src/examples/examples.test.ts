@@ -1,10 +1,11 @@
+import { fetchCuple } from "@cuple/client";
+import { success } from "@cuple/server";
 import { createCupleReactAdminAPI } from "@ra-api/index";
 import { createCupleReactAdminDataProvider } from "@ra-data-provider/index";
 import assert from "assert";
 import { describe, it } from "mocha";
 import { z } from "zod";
 import createClientAndServer from "../utils/createClientAndServer";
-import { success } from "@cuple/server";
 
 describe("Example", () => {
   it("should create default handlers", async () => {
@@ -15,7 +16,7 @@ describe("Example", () => {
         defaultHandlers: {
           async create(data) {
             return success({
-              item: { id: 1, name: data.body.data["name"] },
+              item: { id: 1, name: data.body.data.name },
             });
           },
           delete(data) {
@@ -44,7 +45,7 @@ describe("Example", () => {
       }),
     }));
     await cs.run(async (client) => {
-      const response = await client.create.post({
+      const response = await fetchCuple(client.create.post, {
         query: {
           resource: "users",
         },
@@ -53,10 +54,10 @@ describe("Example", () => {
             name: "Foo Bar",
           },
         },
-      });
+      }).thenResolveAnyResponse();
 
       if (response.result !== "success") throw new Error("response should be success");
-      assert.equal((response.item as { id: number; name: string })["name"], "Foo Bar");
+      assert.equal((response.item as { id: number; name: string }).name, "Foo Bar");
     });
   });
 
@@ -95,7 +96,7 @@ describe("Example", () => {
           users: {
             async create(data) {
               return success({
-                item: { id: 1, name: data.body.data["name"] },
+                item: { id: 1, name: data.body.data.name },
               });
             },
           },
@@ -103,7 +104,7 @@ describe("Example", () => {
       }),
     }));
     await cs.run(async (client) => {
-      const response = await client.create.post({
+      const response = await fetchCuple(client.create.post, {
         query: {
           resource: "users",
         },
@@ -112,12 +113,12 @@ describe("Example", () => {
             name: "Foo Bar",
           },
         },
-      });
+      }).thenResolveAnyResponse();
 
       if (response.result !== "success") throw new Error("response should be success");
-      assert.equal((response.item as { id: number; name: string })["name"], "Foo Bar");
+      assert.equal((response.item as { id: number; name: string }).name, "Foo Bar");
 
-      const response2 = await client.create.post({
+      const response2 = await fetchCuple(client.create.post, {
         query: {
           resource: "posts",
         },
@@ -126,7 +127,7 @@ describe("Example", () => {
             name: "Foo Bar",
           },
         },
-      });
+      }).thenResolveAnyResponse();
 
       assert.equal(response2.result, "unexpected-error");
     });
@@ -183,7 +184,7 @@ describe("Example", () => {
             users: {
               async create(data) {
                 return success({
-                  item: { id: 1, name: data.body.data["name"] },
+                  item: { id: 1, name: data.body.data.name },
                 });
               },
             },
@@ -192,15 +193,17 @@ describe("Example", () => {
       };
     });
     await cs.run(async (client) => {
-      const authedClient = client.with(() => ({
-        headers: {
-          autherization: "Bearer hey",
-        },
-      }));
+      const authedClient = client.with({
+        middleware: () => ({
+          headers: {
+            autherization: "Bearer hey",
+          },
+        }),
+      });
 
       createCupleReactAdminDataProvider(authedClient.admin);
 
-      const response = await authedClient.admin.create.post({
+      const response = await fetchCuple(authedClient.admin.create.post, {
         query: {
           resource: "users",
         },
@@ -209,10 +212,10 @@ describe("Example", () => {
             name: "Foo Bar",
           },
         },
-      });
+      }).thenResolveAnyResponse();
 
       if (response.result !== "success") throw new Error("response should be success");
-      assert.equal((response.item as { id: number; name: string })["name"], "Foo Bar");
+      assert.equal((response.item as { id: number; name: string }).name, "Foo Bar");
     });
   });
 });

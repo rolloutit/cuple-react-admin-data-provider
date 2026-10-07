@@ -1,230 +1,179 @@
 import {
-  GetListParams,
-  QueryFunctionContext,
-  GetListResult,
-  GetOneParams,
-  GetOneResult,
-  GetManyParams,
-  GetManyResult,
-  GetManyReferenceParams,
-  GetManyReferenceResult,
-  UpdateParams,
-  UpdateResult,
-  UpdateManyParams,
-  UpdateManyResult,
-  CreateParams,
+  type ClientEndpointRef,
+  type ClientProps,
+  type CupleSuccess,
+  type FetchCupleArgs,
+  fetchCuple,
+} from "@cuple/client";
+import type {
   CreateResult,
-  DeleteParams,
+  DataProvider,
   DeleteResult,
-  DeleteManyParams,
-  DeleteManyResult,
+  GetListResult,
+  GetManyResult,
+  GetOneResult,
+  UpdateResult,
 } from "react-admin";
 
-import type * as CupleReactAdminApi from "../../ra-api";
+/** react-admin passes any resource name, the server checks it against its resources. */
+type Resource = any;
+type Id = number | string;
+type Item = { id: Id };
+type Success<T> = { result: "success"; statusCode: 200 } & T;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type RecordType = any;
+type Endpoint<TInput, TSuccess> = {
+  tInput: TInput;
+  tOutput: Success<TSuccess>;
+  tMethod: any;
+  clientProps: ClientProps;
+};
 
-export function createCupleReactAdminDataProvider<
-  TResource extends string,
->(clientModule: {
+/** The endpoints of `createCupleReactAdminAPI`, as the data provider calls them. */
+type Endpoints = {
   getList: {
-    get: (
-      params: CupleReactAdminApi.GetListClientParams<TResource>,
-    ) => Promise<CupleReactAdminApi.GetListResult>;
+    get: Endpoint<
+      {
+        query: {
+          resource: Resource;
+          range: [number, number];
+          sort?: Record<string, "asc" | "desc">;
+          filter?: Record<string, unknown>;
+          ids?: Id[];
+        };
+      },
+      { items: Item[]; total: number }
+    >;
   };
   getOne: {
-    get: (
-      params: CupleReactAdminApi.GetOneClientParams<TResource>,
-    ) => Promise<CupleReactAdminApi.GetOneResult>;
+    get: Endpoint<{ query: { resource: Resource; id: Id } }, { item: Item | null }>;
   };
   getMany: {
-    get: (
-      params: CupleReactAdminApi.GetManyClientParams<TResource>,
-    ) => Promise<CupleReactAdminApi.GetManyResult>;
-  };
-  update: {
-    put: (
-      params: CupleReactAdminApi.UpdateClientParams<TResource>,
-    ) => Promise<CupleReactAdminApi.UpdateResult>;
-  };
-  updateMany: {
-    put: (
-      params: CupleReactAdminApi.UpdateManyClientParams<TResource>,
-    ) => Promise<CupleReactAdminApi.UpdateManyResult>;
+    get: Endpoint<{ query: { resource: Resource; ids: Id[] } }, { items: Item[] }>;
   };
   create: {
-    post: (
-      params: CupleReactAdminApi.CreateClientParams<TResource>,
-    ) => Promise<CupleReactAdminApi.CreateResult>;
+    post: Endpoint<
+      { query: { resource: Resource }; body: { data: Record<string, any> } },
+      { item: Item | null }
+    >;
+  };
+  update: {
+    put: Endpoint<
+      { query: { resource: Resource }; body: { data: Record<string, any> } },
+      { item: Item | null }
+    >;
+  };
+  updateMany: {
+    put: Endpoint<
+      {
+        query: { resource: Resource };
+        body: { ids: Id[]; changes: Record<string, any> };
+      },
+      object
+    >;
   };
   delete: {
-    delete: (
-      params: CupleReactAdminApi.DeleteClientParams<TResource>,
-    ) => Promise<CupleReactAdminApi.DeleteResult>;
+    delete: Endpoint<{ query: { resource: Resource; id: Id } }, { item: Item | null }>;
   };
+  deleteMany: { delete: Endpoint<{ query: { resource: Resource; ids: Id[] } }, object> };
+};
+
+type ClientModule = {
+  [Key in keyof Endpoints]: { [Method in keyof Endpoints[Key]]: ClientEndpointRef };
+};
+
+/**
+ * Cuple's own check: the client endpoint is callable with the data provider's input
+ * (e.g. its headers come from `client.with()`), and it succeeds with the expected data.
+ */
+type Callable<
+  TEndpoint extends ClientEndpointRef,
+  TExpected extends ClientEndpointRef,
+> = [TExpected["tInput"], CupleSuccess<TEndpoint>] extends [
+  FetchCupleArgs<TEndpoint>[0],
+  CupleSuccess<TExpected>,
+]
+  ? TEndpoint
+  : never;
+
+type CallableClientModule<T extends ClientModule> = {
+  getList: { get: Callable<T["getList"]["get"], Endpoints["getList"]["get"]> };
+  getOne: { get: Callable<T["getOne"]["get"], Endpoints["getOne"]["get"]> };
+  getMany: { get: Callable<T["getMany"]["get"], Endpoints["getMany"]["get"]> };
+  create: { post: Callable<T["create"]["post"], Endpoints["create"]["post"]> };
+  update: { put: Callable<T["update"]["put"], Endpoints["update"]["put"]> };
+  updateMany: { put: Callable<T["updateMany"]["put"], Endpoints["updateMany"]["put"]> };
+  delete: { delete: Callable<T["delete"]["delete"], Endpoints["delete"]["delete"]> };
   deleteMany: {
-    delete: (
-      params: CupleReactAdminApi.DeleteManyClientParams<TResource>,
-    ) => Promise<CupleReactAdminApi.DeleteManyResult>;
+    delete: Callable<T["deleteMany"]["delete"], Endpoints["deleteMany"]["delete"]>;
   };
-}) {
-  async function getList(
-    resource: string,
-    params: GetListParams & QueryFunctionContext,
-  ): Promise<GetListResult<RecordType>> {
-    const { page, perPage } = params.pagination || { page: 1, perPage: 10 };
-    const sort = params.sort;
+};
 
-    const rangeStart = (page - 1) * perPage;
-    const rangeEnd = page * perPage - 1;
+export function createCupleReactAdminDataProvider<TClientModule extends ClientModule>(
+  clientModule: TClientModule & CallableClientModule<TClientModule>,
+) {
+  const api = clientModule as unknown as Endpoints;
 
-    const req = await clientModule.getList.get({
+  const getList = (async (resource, params): Promise<GetListResult> => {
+    const { page, perPage } = params.pagination ?? { page: 1, perPage: 10 };
+    const { sort, filter } = params;
+    const { items, total } = await fetchCuple(api.getList.get, {
       query: {
-        resource: resource as TResource,
-        filter: params.filter,
-        range: [rangeStart, rangeEnd],
+        resource,
+        filter,
+        range: [(page - 1) * perPage, page * perPage - 1],
         sort: sort ? { [sort.field]: sort.order.toLowerCase() as "asc" | "desc" } : {},
       },
     });
-    if (req.result !== "success") {
-      throw new Error(req.message);
-    }
-    return {
-      data: req.items,
-      total: req.total,
-    };
-  }
-
-  async function getOne(
-    resource: string,
-    params: GetOneParams<RecordType> & QueryFunctionContext,
-  ): Promise<GetOneResult<RecordType>> {
-    const req = await clientModule.getOne.get({
-      query: {
-        resource: resource as TResource,
-        id: params.id,
-      },
-    });
-    if (req.result !== "success") {
-      throw new Error(req.message);
-    }
-    return { data: req.item as RecordType };
-  }
-
-  async function getMany(
-    resource: string,
-    params: GetManyParams<RecordType> & QueryFunctionContext,
-  ): Promise<GetManyResult<RecordType>> {
-    const req = await clientModule.getMany.get({
-      query: {
-        resource: resource as TResource,
-        ids: params.ids,
-      },
-    });
-    if (req.result !== "success") {
-      throw new Error(req.message);
-    }
-    return { data: req.items as RecordType[] };
-  }
-
-  async function getManyReference(
-    resource: string,
-    params: GetManyReferenceParams & QueryFunctionContext,
-  ): Promise<GetManyReferenceResult<RecordType>> {
-    return await getList(resource, params);
-  }
-
-  async function update(
-    resource: string,
-    params: UpdateParams,
-  ): Promise<UpdateResult<RecordType>> {
-    const req = await clientModule.update.put({
-      query: { resource: resource as TResource },
-      body: {
-        data: params.data,
-      },
-    });
-    if (req.result !== "success") {
-      throw new Error(req.message);
-    }
-    return { data: req.item as RecordType };
-  }
-
-  async function updateMany(
-    resource: string,
-    params: UpdateManyParams<RecordType>,
-  ): Promise<UpdateManyResult<RecordType>> {
-    const req = await clientModule.updateMany.put({
-      query: { resource: resource as TResource },
-      body: {
-        ids: params.ids as number[],
-        changes: params.data,
-      },
-    });
-    if (req.result !== "success") {
-      throw new Error(req.message);
-    }
-    return { data: params.ids as number[] };
-  }
-
-  async function create(
-    resource: string,
-    params: CreateParams<Omit<RecordType, "id">>,
-  ): Promise<CreateResult<RecordType>> {
-    const req = await clientModule.create.post({
-      query: { resource: resource as TResource },
-      body: {
-        data: params.data,
-      },
-    });
-    if (req.result !== "success") {
-      throw new Error(req.message);
-    }
-    return { data: req.item as RecordType };
-  }
-
-  async function delete_(
-    resource: string,
-    params: DeleteParams<RecordType>,
-  ): Promise<DeleteResult<RecordType>> {
-    const req = await clientModule.delete.delete({
-      query: {
-        resource: resource as TResource,
-        id: params.id,
-      },
-    });
-    if (req.result !== "success") {
-      throw new Error(req.message);
-    }
-    return { data: req.item as RecordType };
-  }
-
-  async function deleteMany(
-    resource: string,
-    params: DeleteManyParams<RecordType>,
-  ): Promise<DeleteManyResult<RecordType>> {
-    const req = await clientModule.deleteMany.delete({
-      query: {
-        resource: resource as TResource,
-        ids: params.ids,
-      },
-    });
-    if (req.result !== "success") {
-      throw new Error(req.message);
-    }
-    return { data: params.ids };
-  }
+    return { data: items, total };
+  }) satisfies DataProvider["getList"];
 
   return {
     getList,
-    getOne,
-    getMany,
-    getManyReference,
-    update,
-    updateMany,
-    create,
-    delete: delete_,
-    deleteMany,
-  };
+    async getOne(resource, params): Promise<GetOneResult> {
+      const { item } = await fetchCuple(api.getOne.get, {
+        query: { resource, id: params.id },
+      });
+      return { data: item };
+    },
+    async getMany(resource, params): Promise<GetManyResult> {
+      const { items } = await fetchCuple(api.getMany.get, {
+        query: { resource, ids: params.ids },
+      });
+      return { data: items };
+    },
+    getManyReference: getList,
+    async create(resource, params): Promise<CreateResult> {
+      const { item } = await fetchCuple(api.create.post, {
+        query: { resource },
+        body: { data: params.data },
+      });
+      return { data: item };
+    },
+    async update(resource, params): Promise<UpdateResult> {
+      const { item } = await fetchCuple(api.update.put, {
+        query: { resource },
+        body: { data: params.data },
+      });
+      return { data: item };
+    },
+    async updateMany(resource, params) {
+      await fetchCuple(api.updateMany.put, {
+        query: { resource },
+        body: { ids: params.ids, changes: params.data },
+      });
+      return { data: params.ids };
+    },
+    async delete(resource, params): Promise<DeleteResult> {
+      const { item } = await fetchCuple(api.delete.delete, {
+        query: { resource, id: params.id },
+      });
+      return { data: item };
+    },
+    async deleteMany(resource, params) {
+      await fetchCuple(api.deleteMany.delete, {
+        query: { resource, ids: params.ids },
+      });
+      return { data: params.ids };
+    },
+  } satisfies DataProvider;
 }
