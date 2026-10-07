@@ -146,7 +146,7 @@ const client = createClient<typeof routes>({ path: "" });
 async function clientCalls() {
   const { item } = await fetchCuple(client.admin.getOne.get, {
     query: { resource: "users", id: 1 },
-  });
+  }).thenKeepSuccess();
   await fetchCuple(client.admin.create.post, {
     // @ts-expect-error unknown resource
     query: { resource: "nope" },
@@ -166,7 +166,7 @@ async function clientCalls() {
 
   const response = await fetchCuple(client.denied.getOne.get, {
     query: { resource: "users", id: 1 },
-  }).thenResolveAnyResponse();
+  });
   if (response.result === "success") response.item;
   if (response.result === "unauthorized-error") response.statusCode;
   if (response.result === "invalid-query") response.message;

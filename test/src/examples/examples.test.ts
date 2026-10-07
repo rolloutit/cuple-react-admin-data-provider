@@ -54,7 +54,7 @@ describe("Example", () => {
             name: "Foo Bar",
           },
         },
-      }).thenResolveAnyResponse();
+      });
 
       if (response.result !== "success") throw new Error("response should be success");
       assert.equal((response.item as { id: number; name: string }).name, "Foo Bar");
@@ -113,7 +113,7 @@ describe("Example", () => {
             name: "Foo Bar",
           },
         },
-      }).thenResolveAnyResponse();
+      });
 
       if (response.result !== "success") throw new Error("response should be success");
       assert.equal((response.item as { id: number; name: string }).name, "Foo Bar");
@@ -127,7 +127,7 @@ describe("Example", () => {
             name: "Foo Bar",
           },
         },
-      }).thenResolveAnyResponse();
+      });
 
       assert.equal(response2.result, "unexpected-error");
     });
@@ -212,7 +212,7 @@ describe("Example", () => {
             name: "Foo Bar",
           },
         },
-      }).thenResolveAnyResponse();
+      });
 
       if (response.result !== "success") throw new Error("response should be success");
       assert.equal((response.item as { id: number; name: string }).name, "Foo Bar");

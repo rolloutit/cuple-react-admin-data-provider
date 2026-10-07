@@ -123,7 +123,7 @@ export function createCupleReactAdminDataProvider<TClientModule extends ClientMo
         range: [(page - 1) * perPage, page * perPage - 1],
         sort: sort ? { [sort.field]: sort.order.toLowerCase() as "asc" | "desc" } : {},
       },
-    });
+    }).thenKeepSuccess();
     return { data: items, total };
   }) satisfies DataProvider["getList"];
 
@@ -132,13 +132,13 @@ export function createCupleReactAdminDataProvider<TClientModule extends ClientMo
     async getOne(resource, params): Promise<GetOneResult> {
       const { item } = await fetchCuple(api.getOne.get, {
         query: { resource, id: params.id },
-      });
+      }).thenKeepSuccess();
       return { data: item };
     },
     async getMany(resource, params): Promise<GetManyResult> {
       const { items } = await fetchCuple(api.getMany.get, {
         query: { resource, ids: params.ids },
-      });
+      }).thenKeepSuccess();
       return { data: items };
     },
     getManyReference: getList,
@@ -146,33 +146,33 @@ export function createCupleReactAdminDataProvider<TClientModule extends ClientMo
       const { item } = await fetchCuple(api.create.post, {
         query: { resource },
         body: { data: params.data },
-      });
+      }).thenKeepSuccess();
       return { data: item };
     },
     async update(resource, params): Promise<UpdateResult> {
       const { item } = await fetchCuple(api.update.put, {
         query: { resource },
         body: { data: params.data },
-      });
+      }).thenKeepSuccess();
       return { data: item };
     },
     async updateMany(resource, params) {
       await fetchCuple(api.updateMany.put, {
         query: { resource },
         body: { ids: params.ids, changes: params.data },
-      });
+      }).thenKeepSuccess();
       return { data: params.ids };
     },
     async delete(resource, params): Promise<DeleteResult> {
       const { item } = await fetchCuple(api.delete.delete, {
         query: { resource, id: params.id },
-      });
+      }).thenKeepSuccess();
       return { data: item };
     },
     async deleteMany(resource, params) {
       await fetchCuple(api.deleteMany.delete, {
         query: { resource, ids: params.ids },
-      });
+      }).thenKeepSuccess();
       return { data: params.ids };
     },
   } satisfies DataProvider;
